@@ -59,14 +59,18 @@ func (f *Fan) Start(d *device.Device) {
 }
 
 func (f *Fan) OnConnect() {
-	f.mq.Subscribe("discover", 1, func(message messaging.Message) {
-		f.announce = true
-		if f.dev != nil {
-			log.Print("Got discover, sending announce: " + *flgDeviceTopic)
-			f.dev.PublishMeta()
-		}
-	})
-	f.subscribeFeatures()
+	go func() {
+		f.mq.Subscribe("discover", 1, func(message messaging.Message) {
+			go func() {
+				f.announce = true
+				if f.dev != nil {
+					log.Print("Got discover, sending announce: " + *flgDeviceTopic)
+					f.dev.PublishMeta()
+				}
+			}()
+		})
+		f.subscribeFeatures()
+	}()
 }
 
 func (f *Fan) subscribeFeatures() {
