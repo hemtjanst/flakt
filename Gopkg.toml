@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/hemtjanst/hemtjanst"
-  version = "master"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/satori/go.uuid"
