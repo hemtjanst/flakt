@@ -1,11 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/hemtjanst/hemtjanst/device"
-	"github.com/hemtjanst/hemtjanst/messaging"
-	"github.com/hemtjanst/hemtjanst/messaging/flagmqtt"
+	"github.com/hemtjanst/bibliotek/transport/mqtt"
 	"log"
 	"os"
 	"os/signal"
@@ -25,49 +23,39 @@ var (
 
 func main() {
 
+	mqCfg := mqtt.MustFlags(flag.String, flag.Bool)
 	var fan *Fan
 
 	flag.Parse()
 
-	id := flagmqtt.NewUniqueIdentifier()
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		defer cancel()
+		quit := make(chan os.Signal)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		<-quit
+	}()
 
-	mqClient, err := flagmqtt.NewPersistentMqtt(flagmqtt.ClientConfig{
-		WillTopic:   "leave",
-		WillPayload: id,
-		WillRetain:  false,
-		WillQoS:     1,
-		ClientID:    id,
-		OnConnectHandler: func(client mqtt.Client) {
-			if fan != nil {
-				fan.OnConnect()
-			}
-		},
-	})
+	mq, err := mqtt.New(ctx, mqCfg())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	mq := messaging.NewMQTTMessenger(mqClient)
-	fan = NewFan(mq, *flgPowerTopic, *flgSpeedTopic, *flgSwingTopic)
-	dev := device.NewDevice(*flgDeviceTopic, mq)
-	dev.Name = *flgDeviceName
-	dev.Manufacturer = *flgDeviceManu
-	dev.Model = *flgDeviceModel
-	dev.SerialNumber = *flgDeviceSerial
-	dev.LastWillID = id
-	fan.Start(dev)
+	fan = NewFan(Config{
+		PowerTopic:         *flgPowerTopic,
+		SpeedTopic:         *flgSpeedTopic,
+		SwingTopic:         *flgSwingTopic,
+		DeviceTopic:        *flgDeviceTopic,
+		DeviceName:         *flgDeviceName,
+		DeviceModel:        *flgDeviceModel,
+		DeviceManufacturer: *flgDeviceManu,
+		DeviceSerial:       *flgDeviceSerial,
+	})
 
-	log.Print("Connecting to MQTT")
-	token := mqClient.Connect()
-	token.Wait()
-	if token.Error() != nil {
+	err = fan.Start(mq)
+	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print("Connected")
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	<-quit
-
+	<-ctx.Done()
 }
