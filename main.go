@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/hemtjanst/bibliotek/transport/mqtt"
+	"lib.hemtjan.st/transport/mqtt"
 	"log"
 	"os"
 	"os/signal"

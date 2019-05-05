@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/hemtjanst/bibliotek/client"
-	"github.com/hemtjanst/bibliotek/device"
-	"github.com/hemtjanst/bibliotek/feature"
-	"github.com/hemtjanst/bibliotek/transport/mqtt"
+	"lib.hemtjan.st/client"
+	"lib.hemtjan.st/device"
+	"lib.hemtjan.st/feature"
+	"lib.hemtjan.st/transport/mqtt"
 	"log"
 	"strconv"
 )

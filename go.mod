@@ -1,5 +1,5 @@
-module github.com/hemtjanst/flakt
+module hemtjan.st/flakt
 
 go 1.12
 
-require github.com/hemtjanst/bibliotek v0.4.1-0.20190504195427-c27ece1212e6
+require lib.hemtjan.st v0.5.0
